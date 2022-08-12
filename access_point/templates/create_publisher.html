@@ -84,17 +84,6 @@
         </div>
     </div>
 
-    <div class="split right">
-        <div class="centered">
-            <h1>Add Subscriber</h1>
-            <label for="subscriber_id"> Subscriber ID: </label>
-            <input type="text" id="subscriber_id" name="subscriber_id" value="subscriber_id"><br><br>
-            <label for="subscription">Subscription (Query): </label>
-            <textarea id="subscription_text" name="subscription_text" cols="70" rows="15"></textarea><br><br>
-            <input type="submit" id="register_subscriber" value="Subscribe">
-        </div>
-    </div>
-
     <script>
 
         var radios = document.forms["add_publisher"].elements["fps_choice"]
@@ -151,7 +140,7 @@
             msg_string = JSON.stringify(msg)
             alert(msg_string)
 
-            axios.post('http://localhost:8080/', msg)
+            axios.post("{{ url_for('create_publisher') }}", msg)
                 .then(function (response) {
                     console.log(response.data);
                     console.log(response.status);
@@ -162,24 +151,6 @@
                 .catch(function (error) {
                     console.log(error);
                 });
-        }
-
-        const register_subscriber = document.getElementById('register_subscriber')
-        register_subscriber.addEventListener("click", registerSubscriber);
-
-        function registerSubscriber(event) {
-            var subscriber_id = document.getElementById('subscriber_id').value
-            var query = document.getElementById('subscription_text').value
-
-            msg = {
-                "subscriber_id": subscriber_id,
-                "query": query
-            }
-
-            msg_text = JSON.stringify(msg)
-            alert(msg_text)
-
-            //websocket stuff goes here
         }
 
     </script>

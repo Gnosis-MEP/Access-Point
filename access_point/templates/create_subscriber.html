@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>GNOSIS Client</title>
+    <meta name="description" content="Our first page">
+    <meta name="keywords" content="html tutorial template">
+    <style>
+        /* Split the screen in half */
+        .split {
+            height: 100%;
+            width: 50%;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            overflow-x: hidden;
+            padding-top: 20px;
+        }
+
+        /* Control the left side */
+        .left {
+            left: 0;
+            background-color: #808080;
+        }
+
+        /* Control the right side */
+        .right {
+            right: 0;
+            background-color: #ADD8E6;
+        }
+
+        /* If you want the content centered horizontally and vertically */
+        .centered {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
+</head>
+
+<body>
+    <div class="split right">
+        <div class="centered">
+            <h1>Add Subscriber</h1>
+            <label for="subscriber_id"> Subscriber ID: </label>
+            <input type="text" id="subscriber_id" name="subscriber_id" value="subscriber_id"><br><br>
+            <label for="subscription">Subscription (Query): </label>
+            <textarea id="subscription_text" name="subscription_text" cols="70" rows="15"></textarea><br><br>
+            <input type="submit" id="register_subscriber" value="Subscribe">
+        </div>
+    </div>
+
+    <script>
+
+        const register_subscriber = document.getElementById('register_subscriber')
+        register_subscriber.addEventListener("click", registerSubscriber);
+
+        function registerSubscriber(event) {
+            var subscriber_id = document.getElementById('subscriber_id').value
+            var query = document.getElementById('subscription_text').value
+
+            msg = {
+                "subscriber_id": subscriber_id,
+                "query": query
+            }
+
+            msg_text = JSON.stringify(msg)
+            alert(msg_text)
+
+            axios.post("{{ url_for('subscriber_registration') }}", msg)
+                .then(function (response) {
+                    console.log(response.data);
+                    console.log(response.status);
+                    console.log(response.statusText);
+                    console.log(response.headers);
+                    console.log(response.config);
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+
+            //websocket stuff goes here
+        }
+
+    </script>
+
+</body>
+
+</html>
