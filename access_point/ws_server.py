@@ -5,7 +5,6 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    a = 1/0
     return render_template('index.html')
 
 @app.route("/publisher/create", methods=['post'])
