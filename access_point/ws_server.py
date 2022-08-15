@@ -7,21 +7,25 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
-@app.route("/publisher/create", methods=['post'])
-def create_publisher():
-    print(request.json)
-    return make_response(jsonify(request.json), 200)
-
-@app.route("/publisher/registration", methods=['get'])
+@app.route("/publisher/registration", methods=['get', 'post'])
 def publisher_registration():
-    return render_template('create_publisher.html')
+    if request.method == 'GET':
+        return render_template('create_publisher.html')  
+    else:
+        return make_response(jsonify(request.json), 200)
 
-@app.route("/subscriber/registration", methods=["get", "post"])
+@app.route("/subscriber/registration", methods=['get', 'post'])
 def subscriber_registration():
     if request.method == "GET":
         return render_template('create_subscriber.html')
     else:
-        return make_response(jsonify(request.json), 200)
+        res = {}
+        res['query_id'] = 'blabla123'
+        return make_response(jsonify(res), 200)
+
+@app.route("/subscribe/query/<string:query_id>", methods=['get'])
+def query_detail(query_id):
+    return render_template('query_detail.html', **{'query_id': query_id})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
