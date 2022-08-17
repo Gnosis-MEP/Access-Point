@@ -14,7 +14,7 @@
         {% block content %}{% endblock %}
     </div>
 
-</body>
+{% block body_end_extra_scripts %}{% endblock %}
 
 <script>
     window.onload = function() {
@@ -22,4 +22,5 @@
         {% endblock %}
     };
 </script>
+</body>
 </html>
