@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <meta name="description" content="Our first page">
+    <meta name="keywords" content="html tutorial template">
+    <title>GNOSIS Client - {% block title %}{% endblock %}</title>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    <div>
+        {% block content %}{% endblock %}
+    </div>
+
+</body>
+
+<script>
+    window.onload = function() {
+        {% block on_page_load_js %}
+        {% endblock %}
+    };
+</script>
+</html>

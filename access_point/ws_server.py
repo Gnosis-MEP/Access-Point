@@ -26,7 +26,7 @@ def subscriber_registration():
 
 @app.route("/subscribe/query/<string:query_id>", methods=['get'])
 def query_detail(query_id):
-    return render_template('query_detail.html', **{'query_id': query_id})
+    return render_template('subscriber/query_detail.html', **{'query_id': query_id})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
