@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from logging import raiseExceptions
 from flask import Flask, request, jsonify, make_response, render_template
 
