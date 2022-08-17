@@ -50,9 +50,24 @@ class PubSubAccessPointApplication(WebSocketApplication):
             return
         self.logger.debug('Received a message')
 
-        # json_msg = json.loads(message)
+        json_msg = json.loads(message)
 
-        # event_data = json.loads(json_msg['event'])
+        event_data = json.loads(json_msg['event'])
+        event_data['status'] = 'received'
+        new_json_msg = {'event': json.dumps(event_data)}
+        new_msg = json.dumps(new_json_msg)
+        self.ws.handler.active_client.ws.send(new_msg)
+
+    #     msg = {
+    #         'event': json.dumps({
+    #             'action': 'unsubscribe',
+    #             'uid': uid,
+    #             'subscription': []
+    #         })
+    #     }
+    #     msg_json = json.dumps(msg)
+        
+
         # if 'action' in event_data:
         #     self.handle_action(event_data, message)
         # else:
