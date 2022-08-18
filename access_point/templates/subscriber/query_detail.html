@@ -9,8 +9,10 @@
 {% block title %}Viewing query: {{ query_id }}{% endblock %}
 
 {% block content %}
-<h1> Details for Query: {{ query_id }} <small class="connecting_status">disconnected</small></h1>
+<h1>Viewing Details for Query: {{ query_id }}</h1>
+<h3>Status: <small class="connecting_status">disconnected</small></h3>
 
+{#
 <section class="row collapse">
     <div class="small-10 columns">
         <input type="text" class="subscription" value="CAT^DOG^PERSON">
@@ -19,14 +21,17 @@
         <button class="postfix secondary update_subscription">Subscribe</button>
     </div>
 </section>
-<section class="panel radius">
+<!-- <section class="panel radius">
     <img id="image_screen" src="" height="400" width="300">
-</section>
+</section> -->
+#}
 <section class="panel radius">
     <li><strong>Events Received: </strong><span class="events_received">0</span></li>
-    <h3>Event Messages:</h3>
+    <h3>Event Message:</h3>
+    <textarea class="message_pane" style="width:800px; height:1200px;" ></textarea>
+<!--
     <ul class="message_pane">
-    </ul>
+    </ul> -->
 </section>
 
 {% endblock %}
@@ -42,16 +47,28 @@
         // var change_img = function(img_url){
         //     $('#image_screen').prop("src", img_url);
         // };
-        var uid = "{{ uid }}";
+        var query_id = "{{ query_id }}";
         var subscription = $('.subscription').val();
         var events_received = 0;
         var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
-        ws.onopen = function () { $('.connecting_status').text('connected'); }
+        ws.onopen = function () {
+             $('.connecting_status').text('connected');
+            ws.send(JSON.stringify({
+                'event_type': 'RegisterWSConnectionForQuery',// replace key with var from templated, which should be set form the conf.py
+                'event': JSON.stringify({
+                    'query_id': query_id,
+                })
+            }));
+        }
         ws.onclose = function () { $('.connecting_status').text('disconnected'); }
         ws.onmessage = function(msg_event) {
+            console.log(msg_event);
             var data = $.parseJSON(msg_event.data);
             var event_data = $.parseJSON(data.event);
             events_received += 1;
+            var prettyJSONstr = JSON.stringify(event_data, null, 2);
+            $('.message_pane').val(prettyJSONstr);
+            $('.events_received').text(events_received);
             // var date = new Date();
             // var options = {
             //     weekday: "long", year: "numeric", month: "short",
@@ -68,16 +85,13 @@
             //     setTimeout(function(){change_img(img_url)}, ms_wait_per_frame)
             //     ms_wait_per_frame = calculated_ms_wait;
             // }
-                $('.message_pane').prepend(
-                    '<dl>' +
-                        // '<dt>Event Data (' + event_received_time + '): </dt>' +
-                        '<dt>' + data.event + '</dt>' +
-                    '</dl>'
-                );
-                $('.events_received').text(events_received);
-             $('.update_subscription').prop("disabled", null);
-
-
+                // $('.message_pane').prepend(
+                //     '<dl>' +
+                //         // '<dt>Event Data (' + event_received_time + '): </dt>' +
+                //         '<dt>' + data.event + '</dt>' +
+                //     '</dl>'
+                // );
+            //  $('.update_subscription').prop("disabled", null);
         }
 
         // $('.subscription').keypress(function(e) {
@@ -86,17 +100,17 @@
 
         //     }
         // });
-        $('.update_subscription').click(function() {
-            // document.title = 'Websocket Interface - ' + uid + ' - ' + subscription + ' - ' + $('.connecting_status').text();
-            ws.send(JSON.stringify({
-                event: JSON.stringify({
-                    'test': 'content, total msg: ' + events_received,
-                })
-            }));
-            $('.update_subscription').prop("disabled", "disabled");
-            // $('.subscription').prop("disabled", "disabled");
-            // $('.current_subscription').text(subscription);
-        });
+        // $('.update_subscription').click(function() {
+        //     // document.title = 'Websocket Interface - ' + uid + ' - ' + subscription + ' - ' + $('.connecting_status').text();
+        //     ws.send(JSON.stringify({
+        //         event: JSON.stringify({
+        //             'test': 'content, total msg: ' + events_received,
+        //         })
+        //     }));
+        //     $('.update_subscription').prop("disabled", "disabled");
+        //     // $('.subscription').prop("disabled", "disabled");
+        //     // $('.current_subscription').text(subscription);
+        // });
     </script>
 
 {% endblock %}

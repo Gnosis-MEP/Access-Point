@@ -24,25 +24,25 @@ def new_msg(event_data):
 def main():
     stream_factory = RedisStreamFactory(host=REDIS_ADDRESS, port=REDIS_PORT)
     # for checking published events output
-    # new_event_type_cmd = stream_factory.create(PUB_EVENT_TYPE_NEW_EVENT_TYPE, stype='streamOnly')
+    new_event_type_cmd = stream_factory.create('cm-cmd', stype='streamOnly')
 
     # for testing sending msgs that the service listens to:
-    # import ipdb; ipdb.set_trace()
-    # some_event_type_cmd = stream_factory.create(LISTEN_EVENT_TYPE_SOME_EVENT_TYPE, stype='streamOnly')
+    import ipdb; ipdb.set_trace()
+    # some_event_type_cmd = stream_factory.create(SERVICE_STREAM_KEY, stype='streamOnly')
     # some_event_type_cmd.write_events(
     #     new_msg(
     #         {
     #             'some': 'thing',
-    #             'other': 'thing',
+    #             'other': 'stuff',
     #         }
     #     )
     # )
     # import ipdb; ipdb.set_trace()
 
     # read published events output
-    # events = new_event_type_cmd.read_events()
-    # print(list(events))
-    # import ipdb; ipdb.set_trace()
+    events = new_event_type_cmd.read_events()
+    print(list(events))
+    import ipdb; ipdb.set_trace()
 
 
 if __name__ == '__main__':
