@@ -62,6 +62,10 @@ def query_detail(query_id):
 
 
 class RedisWebSocketServer(WebSocketServer):
+    """
+    This is the main class responsible for the websocket server.
+    It should talk to redis through the AccessPoint server class instance.
+    """
 
     def __init__(self, *args, **kwargs):
         self.stream_factory = kwargs.pop('stream_factory', None)
@@ -93,6 +97,11 @@ class RedisWebSocketServer(WebSocketServer):
         self.send_msg_to_stream('QueryReceived', event_data)
 
     def serve_forever(self, stop_timeout=None):
+        """
+        this is the main entrypoint in the WS server.
+        For now it is only adding the mocked pub/query msgs and then spawning a thread that will read a query output stream
+        (using the MOCKED_QUERY_ID).
+        """
         if self.stream_factory:
             # self._mocked_register_pub_and_query()
             self.redis_thread = threading.Thread(target=self.forever_read_redis_stream, args=(MOCKED_QUERY_ID,))
@@ -112,12 +121,14 @@ class RedisWebSocketServer(WebSocketServer):
         return event_msg
 
     def send_msg_to_stream(self, destination_stream_key, event_data):
+        "method used to send msgs to a redis stream"
         if self.stream_factory is None:
             return
         destination_stream = self.stream_factory.create(destination_stream_key, stype='streamOnly')
         return destination_stream.write_events(self.redis_default_event_serializer(event_data))
 
     def send_msg_to_ws_client(self, query_id, json_msg):
+        "method used to send msgs to a WS client, based on the query_id this msg is related to"
         client = self.query_id_to_ws_client_map.get(query_id)
         utf8_decoded_json_msg = json_msg
         if b'event' in json_msg:
@@ -131,12 +142,18 @@ class RedisWebSocketServer(WebSocketServer):
         client.ws.send(json.dumps(utf8_decoded_json_msg))
 
     def process_event_type(self, event_type, json_msg):
+        "method used to process any event type in this server, eg: QueryCreated"
         event_data = self.redis_default_event_deserializer(json_msg)
         self.logger.debug(f'read this event of type {event_type}, and will process it: {event_data}')
         if event_type == 'QueryCreated': # replace with const from conf.py
             pass
 
     def forever_read_redis_stream(self, stream_key):
+        """
+        method that will run forever, and read a given redis stream (using the strem key arg).
+        then it process any read msg accordinly. Eg: send to WS if it is reading from the query output stream, or process the event
+        if receiving a event type of QueryCreated from Genosis, for example.
+        """
         self.logger.debug(f'created reading stream: {stream_key}')
         stream = self.stream_factory.create(stream_key)
         if stream_key in self.query_id_to_ws_client_map.keys():
@@ -168,6 +185,11 @@ class RedisWebSocketServer(WebSocketServer):
 
 
 class PubSubAccessPointApplication(WebSocketApplication):
+    """
+    This class is responsible only for stuff related to the client(browser) ws communication.
+    Most specifically, it is responsible for handling the msgs that arrive from the WS client (ex: RegisterWSConnectionForQuery)
+    Any communication with redis, or routing of msgs from redis to WS should <NOT> be done in this class.
+    """
     def __init__(self, ws):
         self.logger = self._setup_logging()
         super(PubSubAccessPointApplication, self).__init__(ws)
@@ -181,9 +203,11 @@ class PubSubAccessPointApplication(WebSocketApplication):
         return logzero.setup_logger(name=self.__class__.__name__, level=logging.getLevelName(LOGGING_LEVEL), formatter=formatter)
 
     def on_open(self):
+        "method that is caleld when a WS connection is openned"
         self.logger.debug('New Client connected')
 
     def on_message(self, message):
+        "method that is called every time a ws msg is received by the server"
         if message is None:
             return
         self.logger.debug('Received a message')
@@ -204,6 +228,7 @@ class PubSubAccessPointApplication(WebSocketApplication):
             self.ws.handler.server.query_id_to_ws_client_map[query_id] = current_client
 
     def on_close(self, reason):
+        "method that is caleld when a WS connection is closed"
         self.logger.info("Connection closed! ")
         current_client = self.ws.handler.active_client
         # if getattr(current_client, 'uid', None):
