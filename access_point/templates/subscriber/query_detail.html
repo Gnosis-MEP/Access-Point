@@ -13,17 +13,9 @@
 <h3>Status: <small class="connecting_status">disconnected</small></h3>
 
 {#
-<section class="row collapse">
-    <div class="small-10 columns">
-        <input type="text" class="subscription" value="CAT^DOG^PERSON">
-    </div>
-    <div class="small-2 columns">
-        <button class="postfix secondary update_subscription">Subscribe</button>
-    </div>
-</section>
-<!-- <section class="panel radius">
+<section class="panel radius">
     <img id="image_screen" src="" height="400" width="300">
-</section> -->
+</section>
 #}
 <section class="panel radius">
     <li><strong>Events Received: </strong><span class="events_received">0</span></li>
@@ -48,7 +40,6 @@
         //     $('#image_screen').prop("src", img_url);
         // };
         var query_id = "{{ query_id }}";
-        var subscription = $('.subscription').val();
         var events_received = 0;
         var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
         ws.onopen = function () {

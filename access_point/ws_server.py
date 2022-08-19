@@ -77,7 +77,7 @@ class RedisWebSocketServer(WebSocketServer):
             "source": "rtmp://172.17.0.1/live/mystream",
             "meta": {
                 "color": "True",
-                "fps": "10",
+                "fps": "30",
                 "resolution": "300x300"
             }
         }
@@ -94,7 +94,7 @@ class RedisWebSocketServer(WebSocketServer):
 
     def serve_forever(self, stop_timeout=None):
         if self.stream_factory:
-            self._mocked_register_pub_and_query()
+            # self._mocked_register_pub_and_query()
             self.redis_thread = threading.Thread(target=self.forever_read_redis_stream, args=(MOCKED_QUERY_ID,))
             self.redis_thread.start()
         super(RedisWebSocketServer, self).serve_forever(stop_timeout=stop_timeout)
@@ -119,16 +119,16 @@ class RedisWebSocketServer(WebSocketServer):
 
     def send_msg_to_ws_client(self, query_id, json_msg):
         client = self.query_id_to_ws_client_map.get(query_id)
-        utf8_encoded_json_msg = json_msg
+        utf8_decoded_json_msg = json_msg
         if b'event' in json_msg:
-            utf8_encoded_json_msg = {
+            utf8_decoded_json_msg = {
                 'event': json_msg[b'event'].decode('utf-8')
             }
         if client is None:
             self.logger.warning(f'No client mapped for query_id: {query_id}. Will ignore message: {json_msg}')
             return
-        self.logger.debug(f'Sending msg to {query_id} WS client: {utf8_encoded_json_msg}')
-        client.ws.send(json.dumps(utf8_encoded_json_msg))
+        self.logger.debug(f'Sending msg to {query_id} WS client: {utf8_decoded_json_msg}')
+        client.ws.send(json.dumps(utf8_decoded_json_msg))
 
     def process_event_type(self, event_type, json_msg):
         event_data = self.redis_default_event_deserializer(json_msg)
@@ -208,9 +208,6 @@ class PubSubAccessPointApplication(WebSocketApplication):
         current_client = self.ws.handler.active_client
         # if getattr(current_client, 'uid', None):
         #     self.send_unsubscribe_to_internal_services(current_client.uid)
-
-
-
 
 
 
