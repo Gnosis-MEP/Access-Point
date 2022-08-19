@@ -203,18 +203,6 @@ class PubSubAccessPointApplication(WebSocketApplication):
             current_client.uid = query_id
             self.ws.handler.server.query_id_to_ws_client_map[query_id] = current_client
 
-    # def send_event_to_subscriber(self, event_data, destination, message):
-    #     self.logger.debug(f'sending event to subscriber: {event_data} to {destination}')
-
-    #     query_id = event_data['query_id'] # replace with 'query_ids'[0] when sending one event at a time instead of whole vekg
-
-    #     dest_client = self.ws.handler.server.query_id_to_ws_client_map.get(query_id, None)
-    #     if dest_client is None:
-    #         self.logger.warning(
-    #             f"Coudn't find destination client with mapped to query id: {query_id}. Will ignore this event: {event_data} ."
-    #         )
-    #     dest_client.ws.send(message)
-
     def on_close(self, reason):
         self.logger.info("Connection closed! ")
         current_client = self.ws.handler.active_client
