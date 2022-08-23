@@ -11,6 +11,7 @@
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 </head>
 
 <body>
@@ -92,7 +93,7 @@
             res_width = document.getElementById('resolution_width').value
             res_height = document.getElementById('resolution_height').value
 
-            msg = {
+            const msg = {
                 "publisher_id": publisher_id,
                 "source": publisher_source,
                 "stream_key": "pub-cmd-" + publisher_id,
@@ -106,17 +107,31 @@
             msg_string = JSON.stringify(msg)
             alert(msg_string)
 
-            axios.post("{{ url_for('publisher_registration') }}", msg)
-                .then(function (response) {
-                    console.log(response.data);
-                    console.log(response.status);
-                    console.log(response.statusText);
-                    console.log(response.headers);
-                    console.log(response.config);
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
+            // axios.post("{{ url_for('publisher_registration') }}", msg)
+            //     .then(function (response) {
+            //         console.log(response.data);
+            //         console.log(response.status);
+            //         console.log(response.statusText);
+            //         console.log(response.headers);
+            //         console.log(response.config);
+            //     })
+            //     .catch(function (error) {
+            //         console.log(error);
+            //     });
+
+            var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
+            ws.onopen = function () {
+                $('.connecting_status').text('connected');
+                ws.send(JSON.stringify({
+                    'event_type': 'RegisterWSConnectionForPublisher',
+                    'event': msg_string // colon in source url messes up the send (e.g., rtmp://)
+                }));
+            }
+            ws.onclose = function () { $('.connecting_status').text('disconnected'); }
+            ws.onmessage = function (msg_event) {
+                console.log(msg_event);
+                alert(msg_event.data);
+            }
         }
 
     </script>
