@@ -36,7 +36,10 @@ def index():
 @app.route("/publisher/registration", methods=['get', 'post'])
 def publisher_registration():
     if request.method == 'GET':
-        return render_template('create_publisher.html')
+        context = {
+           'AP_WS_EXTERNAL_ADDRESS': AP_WS_EXTERNAL_ADDRESS 
+        }
+        return render_template('create_publisher.html', **context)
     else:
         return make_response(jsonify(request.json), 200)
 
@@ -74,11 +77,12 @@ class RedisWebSocketServer(WebSocketServer):
         self.query_id_streams_map = {}
         super(RedisWebSocketServer, self).__init__(*args, **kwargs)
 
-    def _mocked_register_pub_and_query(self):
+    def _mocked_register_pub(self):
         event_data = {
             'id': f'AccessPoint:{str(uuid.uuid4())}',
             "publisher_id": "Publisher1",
-            "source": "rtmp://172.17.0.1/live/mystream",
+            # "source": "rtmp://172.17.0.1/live/mystream",
+            "source": "rtmp://host.docker.internal/vod2/cars.mp4",
             "meta": {
                 "color": "True",
                 "fps": "30",
@@ -87,7 +91,7 @@ class RedisWebSocketServer(WebSocketServer):
         }
         self.send_msg_to_stream('PublisherCreated', event_data)
 
-        time.sleep(1)
+    def _mocked_register_query(self):
         query_text = "REGISTER QUERY AnyPersonFromPub1LatencyMin OUTPUT K_GRAPH_JSON CONTENT ObjectDetection MATCH (p:person) FROM Publisher1 WITHIN TUMBLING_COUNT_WINDOW(1) WITH_QOS latency = 'min' RETURN *"
         event_data = {
             'id': f'AccessPoint:{str(uuid.uuid4())}',
@@ -95,6 +99,7 @@ class RedisWebSocketServer(WebSocketServer):
             'query': query_text
         }
         self.send_msg_to_stream('QueryReceived', event_data)
+
 
     def serve_forever(self, stop_timeout=None):
         """
@@ -225,7 +230,12 @@ class PubSubAccessPointApplication(WebSocketApplication):
             query_id = event_data['query_id']
             current_client = self.ws.handler.active_client
             current_client.uid = query_id
+            self.ws.handler.server._mocked_register_query()
             self.ws.handler.server.query_id_to_ws_client_map[query_id] = current_client
+        elif event_type == 'RegisterWSConnectionForPublisher':
+            publisher_id = event_data['publisher_id']
+            self.ws.handler.server._mocked_register_pub()
+            self.ws.handler.active_client.ws.send('Publisher Registered')
 
     def on_close(self, reason):
         "method that is caleld when a WS connection is closed"
@@ -249,4 +259,6 @@ if __name__ == '__main__':
         debug=True,
     )
     ws.serve_forever()
+
+
 
