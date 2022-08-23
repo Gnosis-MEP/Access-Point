@@ -16,7 +16,7 @@ flake8 = "*"
 [packages]
 walrus = "==0.7.1"
 python-decouple = "==3.1"
-event-service-utils = "*"
+event-service-utils = "==1.7.0"
 access_point = {path = ".",editable = true}
 gevent-websocket = "==0.10.1"
 websocket-client = "==0.55.0"
