@@ -25,7 +25,7 @@ Copy the `example.env` file to `.env`, and inside it replace `SIT_PYPI_USER` and
 ### Using pipenv
 Run `$ pipenv shell` to create a python virtualenv and load the .env into the environment variables in the shell.
 
-Then run: `$ pipenv install` to install all packages, or `$ pipenv install -d` to also install the packages that help during development, eg: ipython.
+Then run: `$ pipenv install` to install all packages, or `$ pipenv install -d` to also install the packages that help during development, eg: ipython. (Add `--skip-lock` flag to skip the locking process if it presents any problems)
 This runs the installation using **pip** under the hood, but also handle the cross dependency issues between packages and checks the packages MD5s for security mesure.
 
 
