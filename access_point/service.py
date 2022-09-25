@@ -10,6 +10,8 @@ class AccessPoint(BaseEventDrivenCMDService):
                  service_stream_key, service_cmd_key_list,
                  pub_event_list, service_details,
                  stream_factory,
+                 query_received_stream_key,
+                 publisher_created_stream_key,
                  logging_level,
                  tracer_configs):
         tracer = init_tracer(self.__class__.__name__, **tracer_configs)
@@ -26,9 +28,19 @@ class AccessPoint(BaseEventDrivenCMDService):
         self.cmd_validation_fields = ['id']
         self.data_validation_fields = ['id']
 
-    # def send_event_to_somewhere(self, event_data):
-    #     self.logger.debug(f'Sending event to somewhere: {event_data}')
-    #     self.write_event_with_trace(event_data, self.somewhere_stream)
+        self.query_received_stream_key = query_received_stream_key
+        self.query_received_stream = self.stream_factory.create(key=query_received_stream_key, stype='streamOnly')
+
+        self.publisher_created_stream_key = publisher_created_stream_key
+        self.publisher_created_stream = self.stream_factory.create(key=publisher_created_stream_key, stype='streamOnly')
+
+    def send_event_to_publisher_created(self, event_data):
+        self.logger.debug(f'Sending event to publisher_created: {event_data}')
+        self.write_event_with_trace(event_data, self.publisher_created_stream)
+
+    def send_event_to_query_received(self, event_data):
+        self.logger.debug(f'Sending event to query_received: {event_data}')
+        self.write_event_with_trace(event_data, self.query_received_stream)
 
     @timer_logger
     def process_data_event(self, event_data, json_msg):
