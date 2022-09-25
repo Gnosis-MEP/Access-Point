@@ -10,7 +10,6 @@
             display: none;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 </head>
 
@@ -105,19 +104,7 @@
             }
 
             msg_string = JSON.stringify(msg)
-            alert(msg_string)
-
-            // axios.post("{{ url_for('publisher_registration') }}", msg)
-            //     .then(function (response) {
-            //         console.log(response.data);
-            //         console.log(response.status);
-            //         console.log(response.statusText);
-            //         console.log(response.headers);
-            //         console.log(response.config);
-            //     })
-            //     .catch(function (error) {
-            //         console.log(error);
-            //     });
+            // alert(msg_string)
 
             var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
             ws.onopen = function () {
