@@ -5,7 +5,7 @@
     <title>GNOSIS Client</title>
     <meta name="description" content="Our first page">
     <meta name="keywords" content="html tutorial template">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 </head>
 
 <body>
@@ -32,23 +32,24 @@
                 "query": query
             }
 
-            msg_text = JSON.stringify(msg)
-            alert(msg_text)
+            msg_string = JSON.stringify(msg)
 
-            axios.post("{{ url_for('subscriber_registration') }}", msg)
-                .then(function (response) {
-                    console.log(response.data);
-                    console.log(response.status);
-                    console.log(response.statusText);
-                    console.log(response.headers);
-                    console.log(response.config);
-                    console.log(response.data.query_id);
-                    
-                    window.location.replace("{{ url_for('query_detail', query_id='') }}" + response.data.query_id);
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
+            var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
+            ws.onopen = function () {
+                $('.connecting_status').text('connected');
+                ws.send(JSON.stringify({
+                    'event_type': 'RegisterQuery',
+                    'event': msg_string
+                }));
+            }
+            ws.onclose = function () { $('.connecting_status').text('disconnected'); }
+            ws.onmessage = function (msg_event) {
+                console.log(msg_event);
+                // the query to go all the way to gnosis
+                // a query id should be generated and sent back
+                // you receive the id here and use it to load a new window
+                window.location.replace("{{ url_for('query_detail', query_id='') }}" + msg_event.data);
+            }
         }
 
     </script>
