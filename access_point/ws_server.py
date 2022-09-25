@@ -11,6 +11,7 @@ from werkzeug.debug import DebuggedApplication
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
 from event_service_utils.streams.redis import RedisStreamFactory
+from access_point.service import AccessPoint
 
 from access_point.conf import (
     AP_WEBSOCKET_PATH,
@@ -20,7 +21,14 @@ from access_point.conf import (
     REDIS_ADDRESS,
     REDIS_PORT,
     SERVICE_STREAM_KEY,
-    LOGGING_LEVEL
+    QUERY_RECEIVED_STREAM_KEY,
+    PUBLISHER_CREATED_STREAM_KEY,
+    LOGGING_LEVEL,
+    PUB_EVENT_LIST,
+    SERVICE_CMD_KEY_LIST,
+    TRACER_REPORTING_HOST,
+    TRACER_REPORTING_PORT,
+    SERVICE_DETAILS,
 )
 
 MOCKED_QUERY_ID = '91b0e93c4b24aaa6fb37ce0e5e216c94'
@@ -37,20 +45,24 @@ def index():
 def publisher_registration():
     if request.method == 'GET':
         context = {
-           'AP_WS_EXTERNAL_ADDRESS': AP_WS_EXTERNAL_ADDRESS 
+           'AP_WS_EXTERNAL_ADDRESS': AP_WS_EXTERNAL_ADDRESS,
+           'AP_WEBSOCKET_ADDRESS': AP_WEBSOCKET_ADDRESS,
+           'AP_WEBSOCKET_PORT': AP_WEBSOCKET_PORT,
+           'AP_WEBSOCKET_PATH': AP_WEBSOCKET_PATH
         }
         return render_template('create_publisher.html', **context)
     else:
         return make_response(jsonify(request.json), 200)
 
-@app.route("/subscriber/registration", methods=['get', 'post'])
+@app.route("/subscriber/registration", methods=['get'])
 def subscriber_registration():
-    if request.method == "GET":
-        return render_template('create_subscriber.html')
-    else:
-        res = {}
-        res['query_id'] = MOCKED_QUERY_ID
-        return make_response(jsonify(res), 200)
+    context = {
+        'AP_WS_EXTERNAL_ADDRESS': AP_WS_EXTERNAL_ADDRESS,
+        'AP_WEBSOCKET_ADDRESS': AP_WEBSOCKET_ADDRESS,
+        'AP_WEBSOCKET_PORT': AP_WEBSOCKET_PORT,
+        'AP_WEBSOCKET_PATH': AP_WEBSOCKET_PATH
+    }
+    return render_template('create_subscriber.html', **context)
 
 @app.route("/subscribe/query/<string:query_id>", methods=['get'])
 def query_detail(query_id):
@@ -72,6 +84,7 @@ class RedisWebSocketServer(WebSocketServer):
 
     def __init__(self, *args, **kwargs):
         self.stream_factory = kwargs.pop('stream_factory', None)
+        self.access_point = kwargs.pop('access_point', None)
         self.service_stream = None
         self.query_id_to_ws_client_map = {}
         self.query_id_streams_map = {}
@@ -89,7 +102,7 @@ class RedisWebSocketServer(WebSocketServer):
                 "resolution": "300x300"
             }
         }
-        self.send_msg_to_stream('PublisherCreated', event_data)
+        self.access_point.send_event_to_publisher_created(event_data)
 
     def _mocked_register_query(self):
         query_text = "REGISTER QUERY AnyPersonFromPub1LatencyMin OUTPUT K_GRAPH_JSON CONTENT ObjectDetection MATCH (p:person) FROM Publisher1 WITHIN TUMBLING_COUNT_WINDOW(1) WITH_QOS latency = 'min' RETURN *"
@@ -98,8 +111,7 @@ class RedisWebSocketServer(WebSocketServer):
             'subscriber_id': 'Subscriber1',
             'query': query_text
         }
-        self.send_msg_to_stream('QueryReceived', event_data)
-
+        self.access_point.send_event_to_query_received(event_data)
 
     def serve_forever(self, stop_timeout=None):
         """
@@ -121,17 +133,6 @@ class RedisWebSocketServer(WebSocketServer):
         event_data = json.loads(event_json)
         return event_data
 
-    def redis_default_event_serializer(self, event_data):
-        event_msg = {'event': json.dumps(event_data)}
-        return event_msg
-
-    def send_msg_to_stream(self, destination_stream_key, event_data):
-        "method used to send msgs to a redis stream"
-        if self.stream_factory is None:
-            return
-        destination_stream = self.stream_factory.create(destination_stream_key, stype='streamOnly')
-        return destination_stream.write_events(self.redis_default_event_serializer(event_data))
-
     def send_msg_to_ws_client(self, query_id, json_msg):
         "method used to send msgs to a WS client, based on the query_id this msg is related to"
         client = self.query_id_to_ws_client_map.get(query_id)
@@ -151,6 +152,8 @@ class RedisWebSocketServer(WebSocketServer):
         event_data = self.redis_default_event_deserializer(json_msg)
         self.logger.debug(f'read this event of type {event_type}, and will process it: {event_data}')
         if event_type == 'QueryCreated': # replace with const from conf.py
+            # i need to identify the responsible active client to send to
+            # i need to send query_id to the client here
             pass
 
     def forever_read_redis_stream(self, stream_key):
@@ -230,12 +233,17 @@ class PubSubAccessPointApplication(WebSocketApplication):
             query_id = event_data['query_id']
             current_client = self.ws.handler.active_client
             current_client.uid = query_id
-            self.ws.handler.server._mocked_register_query()
             self.ws.handler.server.query_id_to_ws_client_map[query_id] = current_client
         elif event_type == 'RegisterWSConnectionForPublisher':
             publisher_id = event_data['publisher_id']
             self.ws.handler.server._mocked_register_pub()
             self.ws.handler.active_client.ws.send('Publisher Registered')
+        elif event_type == 'RegisterQuery':
+            self.ws.handler.server._mocked_register_query()
+            self.ws.handler.active_client.ws.send(MOCKED_QUERY_ID) # this should be received from redis then sent to the client
+
+            # you will need to bind a query id generated from the ws client in order to send the query id generated by gnosis to the client
+
 
     def on_close(self, reason):
         "method that is caleld when a WS connection is closed"
@@ -244,11 +252,23 @@ class PubSubAccessPointApplication(WebSocketApplication):
         # if getattr(current_client, 'uid', None):
         #     self.send_unsubscribe_to_internal_services(current_client.uid)
 
-
-
-
 if __name__ == '__main__':
+    tracer_configs = {
+        'reporting_host': TRACER_REPORTING_HOST,
+        'reporting_port': TRACER_REPORTING_PORT,
+    }
     stream_factory = RedisStreamFactory(host=REDIS_ADDRESS, port=REDIS_PORT)
+    access_point = AccessPoint(
+        service_stream_key=SERVICE_STREAM_KEY,
+        service_cmd_key_list=SERVICE_CMD_KEY_LIST,
+        pub_event_list=PUB_EVENT_LIST,
+        service_details=SERVICE_DETAILS,
+        stream_factory=stream_factory,
+        query_received_stream_key=QUERY_RECEIVED_STREAM_KEY,
+        publisher_created_stream_key=PUBLISHER_CREATED_STREAM_KEY,
+        logging_level=LOGGING_LEVEL,
+        tracer_configs=tracer_configs
+    )
     ws = RedisWebSocketServer(
         ('0.0.0.0', AP_WEBSOCKET_PORT),
         Resource([
@@ -256,6 +276,7 @@ if __name__ == '__main__':
             ('^/.*', DebuggedApplication(app))
         ]),
         stream_factory=stream_factory,
+        access_point = access_point,
         debug=True,
     )
     ws.serve_forever()
