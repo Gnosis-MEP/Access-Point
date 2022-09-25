@@ -36,9 +36,6 @@
 
 
     <script>
-        // var change_img = function(img_url){
-        //     $('#image_screen').prop("src", img_url);
-        // };
         var query_id = "{{ query_id }}";
         var events_received = 0;
         var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
@@ -60,48 +57,8 @@
             var prettyJSONstr = JSON.stringify(event_data, null, 2);
             $('.message_pane').val(prettyJSONstr);
             $('.events_received').text(events_received);
-            // var date = new Date();
-            // var options = {
-            //     weekday: "long", year: "numeric", month: "short",
-            //     day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit"
-            // };
-            // var event_received_time = date.toLocaleTimeString("en-ie", options) + ":" + date.getMilliseconds();
-
-            // var event_fps = 30;
-            // var fist_ms_wait_per_frame = 0;
-            // var calculated_ms_wait = 1000 / event_fps;
-            // var ms_wait_per_frame = fist_ms_wait_per_frame;
-
-            // for(let img_url of event_data.event_img_urls){
-            //     setTimeout(function(){change_img(img_url)}, ms_wait_per_frame)
-            //     ms_wait_per_frame = calculated_ms_wait;
-            // }
-                // $('.message_pane').prepend(
-                //     '<dl>' +
-                //         // '<dt>Event Data (' + event_received_time + '): </dt>' +
-                //         '<dt>' + data.event + '</dt>' +
-                //     '</dl>'
-                // );
-            //  $('.update_subscription').prop("disabled", null);
         }
 
-        // $('.subscription').keypress(function(e) {
-        //     if (e.which === 13) {
-        //         $('.update_subscription').click();
-
-        //     }
-        // });
-        // $('.update_subscription').click(function() {
-        //     // document.title = 'Websocket Interface - ' + uid + ' - ' + subscription + ' - ' + $('.connecting_status').text();
-        //     ws.send(JSON.stringify({
-        //         event: JSON.stringify({
-        //             'test': 'content, total msg: ' + events_received,
-        //         })
-        //     }));
-        //     $('.update_subscription').prop("disabled", "disabled");
-        //     // $('.subscription').prop("disabled", "disabled");
-        //     // $('.current_subscription').text(subscription);
-        // });
     </script>
 
 {% endblock %}
