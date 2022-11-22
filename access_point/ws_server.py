@@ -5,76 +5,14 @@ import time
 import threading
 import uuid
 
-from flask import Flask, request, jsonify, make_response, render_template
 import logzero
-from werkzeug.debug import DebuggedApplication
-from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
-
-from event_service_utils.streams.redis import RedisStreamFactory
-from access_point.service import AccessPoint
-
-from queue import Queue
+from geventwebsocket import WebSocketServer, WebSocketApplication
 
 from access_point.conf import (
-    AP_WEBSOCKET_PATH,
-    AP_WEBSOCKET_PORT,
-    AP_WEBSOCKET_ADDRESS,
-    AP_WS_EXTERNAL_ADDRESS,
-    REDIS_ADDRESS,
-    REDIS_PORT,
-    SERVICE_STREAM_KEY,
     LOGGING_LEVEL,
-    PUB_EVENT_LIST,
-    SERVICE_CMD_KEY_LIST,
-    TRACER_REPORTING_HOST,
-    TRACER_REPORTING_PORT,
-    SERVICE_DETAILS,
 )
 
 MOCKED_QUERY_ID = '91b0e93c4b24aaa6fb37ce0e5e216c94'
-
-
-app = Flask(__name__, static_url_path='')
-app.debug = True
-
-@app.route("/")
-def index():
-    return render_template('index.html')
-
-@app.route("/publisher/registration", methods=['get', 'post'])
-def publisher_registration():
-    if request.method == 'GET':
-        context = {
-           'AP_WS_EXTERNAL_ADDRESS': AP_WS_EXTERNAL_ADDRESS,
-           'AP_WEBSOCKET_ADDRESS': AP_WEBSOCKET_ADDRESS,
-           'AP_WEBSOCKET_PORT': AP_WEBSOCKET_PORT,
-           'AP_WEBSOCKET_PATH': AP_WEBSOCKET_PATH
-        }
-        return render_template('create_publisher.html', **context)
-    else:
-        return make_response(jsonify(request.json), 200)
-
-@app.route("/subscriber/registration", methods=['get'])
-def subscriber_registration():
-    context = {
-        'AP_WS_EXTERNAL_ADDRESS': AP_WS_EXTERNAL_ADDRESS,
-        'AP_WEBSOCKET_ADDRESS': AP_WEBSOCKET_ADDRESS,
-        'AP_WEBSOCKET_PORT': AP_WEBSOCKET_PORT,
-        'AP_WEBSOCKET_PATH': AP_WEBSOCKET_PATH
-    }
-    return render_template('create_subscriber.html', **context)
-
-@app.route("/subscribe/query/<string:query_id>", methods=['get'])
-def query_detail(query_id):
-    context = {
-        'query_id': query_id,
-        'AP_WS_EXTERNAL_ADDRESS': AP_WS_EXTERNAL_ADDRESS,
-        'AP_WEBSOCKET_ADDRESS': AP_WEBSOCKET_ADDRESS,
-        'AP_WEBSOCKET_PORT': AP_WEBSOCKET_PORT,
-        'AP_WEBSOCKET_PATH': AP_WEBSOCKET_PATH
-    }
-    return render_template('subscriber/query_detail.html', **context)
-
 
 class RedisWebSocketServer(WebSocketServer):
     """
@@ -251,33 +189,6 @@ class PubSubAccessPointApplication(WebSocketApplication):
         current_client = self.ws.handler.active_client
         # if getattr(current_client, 'uid', None):
         #     self.send_unsubscribe_to_internal_services(current_client.uid)
-
-if __name__ == '__main__':
-    stream_factory = RedisStreamFactory(host=REDIS_ADDRESS, port=REDIS_PORT)
-    tracer_configs = {
-        'reporting_host': TRACER_REPORTING_HOST,
-        'reporting_port': TRACER_REPORTING_PORT,
-    }
-    access_point = AccessPoint(
-        service_stream_key=SERVICE_STREAM_KEY,
-        service_cmd_key_list=SERVICE_CMD_KEY_LIST,
-        pub_event_list=PUB_EVENT_LIST,
-        service_details=SERVICE_DETAILS,
-        stream_factory=stream_factory,
-        logging_level=LOGGING_LEVEL,
-        tracer_configs=tracer_configs
-    )
-    ws = RedisWebSocketServer(
-        ('0.0.0.0', AP_WEBSOCKET_PORT),
-        Resource([
-            (f'^{AP_WEBSOCKET_PATH}', PubSubAccessPointApplication),
-            ('^/.*', DebuggedApplication(app))
-        ]),
-        stream_factory=stream_factory,
-        access_point = access_point,
-        debug=True,
-    )
-    ws.serve_forever()
 
 
 
