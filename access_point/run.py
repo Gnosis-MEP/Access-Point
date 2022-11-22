@@ -6,7 +6,8 @@ from access_point.service import AccessPoint
 from flask import Flask, request, jsonify, make_response, render_template
 from werkzeug.debug import DebuggedApplication
 
-from ws_server import RedisWebSocketServer, PubSubAccessPointApplication, Resource
+from ws_server import RedisWebSocketServer, PubSubAccessPointApplication
+from geventwebsocket import Resource
 
 from access_point.conf import (
     AP_WEBSOCKET_PATH,
