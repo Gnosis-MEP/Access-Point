@@ -13,6 +13,8 @@ from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 from event_service_utils.streams.redis import RedisStreamFactory
 from access_point.service import AccessPoint
 
+from queue import Queue
+
 from access_point.conf import (
     AP_WEBSOCKET_PATH,
     AP_WEBSOCKET_PORT,
@@ -21,8 +23,6 @@ from access_point.conf import (
     REDIS_ADDRESS,
     REDIS_PORT,
     SERVICE_STREAM_KEY,
-    QUERY_RECEIVED_STREAM_KEY,
-    PUBLISHER_CREATED_STREAM_KEY,
     LOGGING_LEVEL,
     PUB_EVENT_LIST,
     SERVICE_CMD_KEY_LIST,
@@ -84,10 +84,10 @@ class RedisWebSocketServer(WebSocketServer):
 
     def __init__(self, *args, **kwargs):
         self.stream_factory = kwargs.pop('stream_factory', None)
-        self.access_point = kwargs.pop('access_point', None)
         self.service_stream = None
         self.query_id_to_ws_client_map = {}
         self.query_id_streams_map = {}
+        self.access_point = None
         super(RedisWebSocketServer, self).__init__(*args, **kwargs)
 
     def _mocked_register_pub(self):
@@ -253,19 +253,17 @@ class PubSubAccessPointApplication(WebSocketApplication):
         #     self.send_unsubscribe_to_internal_services(current_client.uid)
 
 if __name__ == '__main__':
+    stream_factory = RedisStreamFactory(host=REDIS_ADDRESS, port=REDIS_PORT)
     tracer_configs = {
         'reporting_host': TRACER_REPORTING_HOST,
         'reporting_port': TRACER_REPORTING_PORT,
     }
-    stream_factory = RedisStreamFactory(host=REDIS_ADDRESS, port=REDIS_PORT)
     access_point = AccessPoint(
         service_stream_key=SERVICE_STREAM_KEY,
         service_cmd_key_list=SERVICE_CMD_KEY_LIST,
         pub_event_list=PUB_EVENT_LIST,
         service_details=SERVICE_DETAILS,
         stream_factory=stream_factory,
-        query_received_stream_key=QUERY_RECEIVED_STREAM_KEY,
-        publisher_created_stream_key=PUBLISHER_CREATED_STREAM_KEY,
         logging_level=LOGGING_LEVEL,
         tracer_configs=tracer_configs
     )
