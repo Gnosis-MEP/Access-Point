@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import json
 import logging
-import time
-import threading
 import uuid
 
 import logzero
@@ -21,8 +19,6 @@ class RedisWebSocketServer(WebSocketServer):
     """
 
     def __init__(self, *args, **kwargs):
-        self.stream_factory = kwargs.pop('stream_factory', None)
-        self.service_stream = None
         self.query_id_to_ws_client_map = {}
         self.query_id_streams_map = {}
         self.access_point = None
@@ -57,19 +53,7 @@ class RedisWebSocketServer(WebSocketServer):
         For now it is only adding the mocked pub/query msgs and then spawning a thread that will read a query output stream
         (using the MOCKED_QUERY_ID).
         """
-        # if self.stream_factory:
-        #     # self._mocked_register_pub_and_query()
-        #     self.redis_thread = threading.Thread(target=self.forever_read_redis_stream, args=(MOCKED_QUERY_ID,))
-        #     self.redis_thread.start()
         super(RedisWebSocketServer, self).serve_forever(stop_timeout=stop_timeout)
-        # if self.stream_factory:
-        #     self.redis_thread.join()
-
-    def redis_default_event_deserializer(self, json_msg):
-        event_key = b'event' if b'event' in json_msg else 'event'
-        event_json = json_msg.get(event_key, '{}')
-        event_data = json.loads(event_json)
-        return event_data
 
     def send_msg_to_ws_client(self, query_id, json_msg):
         "method used to send msgs to a WS client, based on the query_id this msg is related to"
@@ -84,50 +68,6 @@ class RedisWebSocketServer(WebSocketServer):
             return
         self.logger.debug(f'Sending msg to {query_id} WS client: {utf8_decoded_json_msg}')
         client.ws.send(json.dumps(utf8_decoded_json_msg))
-
-    def process_event_type(self, event_type, json_msg):
-        "method used to process any event type in this server, eg: QueryCreated"
-        event_data = self.redis_default_event_deserializer(json_msg)
-        self.logger.debug(f'read this event of type {event_type}, and will process it: {event_data}')
-        if event_type == 'QueryCreated': # replace with const from conf.py
-            # i need to identify the responsible active client to send to
-            # i need to send query_id to the client here
-            pass
-
-    def forever_read_redis_stream(self, stream_key):
-        """
-        method that will run forever, and read a given redis stream (using the strem key arg).
-        then it process any read msg accordinly. Eg: send to WS if it is reading from the query output stream, or process the event
-        if receiving a event type of QueryCreated from Genosis, for example.
-        """
-        self.logger.debug(f'created reading stream: {stream_key}')
-        stream = self.stream_factory.create(stream_key)
-        if stream_key in self.query_id_to_ws_client_map.keys():
-            query_id = stream_key
-            self.query_id_streams_map[query_id] = stream
-        self.logger.debug('will read it forever')
-        while True:
-            if not stream:
-                time.sleep(0.01)
-                continue
-
-            event_list = stream.read_events(count=1)
-            for event_tuple in event_list:
-                event_id, json_msg = event_tuple
-                try:
-                    if stream_key in self.query_id_to_ws_client_map.keys():
-                        query_id = stream_key
-                        self.send_msg_to_ws_client(query_id, json_msg)
-                    else:
-                        event_type = stream_key
-                        self.process_event_type(event_type, json_msg)
-                except Exception as e:
-                    self.logger.error(f'Error processing {json_msg}:')
-                    self.logger.exception(e)
-                finally:
-                    pass
-                    # stream.ack(event_id)
-                    # no ack for now, later may change to: we are always ack the events, even if they fail.
 
 
 class PubSubAccessPointApplication(WebSocketApplication):
