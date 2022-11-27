@@ -79,7 +79,6 @@ def run_service():
             (f'^{AP_WEBSOCKET_PATH}', PubSubAccessPointApplication),
             ('^/.*', DebuggedApplication(app))
         ]),
-        stream_factory=stream_factory,
         debug=True,
     )
     service = AccessPoint(
