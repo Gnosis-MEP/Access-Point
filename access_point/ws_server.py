@@ -57,13 +57,13 @@ class RedisWebSocketServer(WebSocketServer):
         For now it is only adding the mocked pub/query msgs and then spawning a thread that will read a query output stream
         (using the MOCKED_QUERY_ID).
         """
-        if self.stream_factory:
-            # self._mocked_register_pub_and_query()
-            self.redis_thread = threading.Thread(target=self.forever_read_redis_stream, args=(MOCKED_QUERY_ID,))
-            self.redis_thread.start()
+        # if self.stream_factory:
+        #     # self._mocked_register_pub_and_query()
+        #     self.redis_thread = threading.Thread(target=self.forever_read_redis_stream, args=(MOCKED_QUERY_ID,))
+        #     self.redis_thread.start()
         super(RedisWebSocketServer, self).serve_forever(stop_timeout=stop_timeout)
-        if self.stream_factory:
-            self.redis_thread.join()
+        # if self.stream_factory:
+        #     self.redis_thread.join()
 
     def redis_default_event_deserializer(self, json_msg):
         event_key = b'event' if b'event' in json_msg else 'event'
