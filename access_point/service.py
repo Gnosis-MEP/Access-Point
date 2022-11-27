@@ -58,7 +58,7 @@ class AccessPoint(BaseEventDrivenCMDService):
     def process_event_type(self, event_type, event_data, json_msg):
         if not super(AccessPoint, self).process_event_type(event_type, event_data, json_msg):
             return False
-        if event_type == 'SomeEventType':
+        if event_type == 'QueryCreated':
             # do some processing
             pass
         elif event_type == 'OtherEventType':
@@ -66,6 +66,12 @@ class AccessPoint(BaseEventDrivenCMDService):
             pass
     
     def process_data(self):
+        """
+        method that will run forever, and read a given redis stream.
+        then it process any read msg accordinly. Eg: send to WS if it is reading from the query output stream, or process the event
+        if receiving a event type of QueryCreated from Genosis, for example.
+        """
+
         # if MOCKED_QUERY_ID in self.rws_server.query_id_to_ws_client_map.keys():
         #     query_id = MOCKED_QUERY_ID
         #     self.query_id_streams_map[query_id] = self.reading_stream
