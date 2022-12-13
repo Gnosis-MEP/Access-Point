@@ -84,7 +84,7 @@ class AccessPoint(BaseEventDrivenCMDService):
             return False
         if event_type == LISTEN_EVENT_TYPE_QUERY_CREATED:
             # inform client that of the query id
-            # query_id = event_data['query_id']
+            query_id = event_data['query_id']
             # registration_id = event_data['registration_id']
             # if registration_id in self.client_registration_ack_map.keys():
             #     registration_client = self.client_registration_ack_map[registration_id]
