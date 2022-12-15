@@ -9,8 +9,6 @@ from access_point.conf import (
     LOGGING_LEVEL,
 )
 
-MOCKED_QUERY_ID = '91b0e93c4b24aaa6fb37ce0e5e216c94'
-
 class RedisWebSocketServer(WebSocketServer):
     """
     This is the main class responsible for the websocket server.
