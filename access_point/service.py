@@ -12,8 +12,6 @@ from access_point.conf import (
     PUB_EVENT_TYPE_PUBLISHER_CREATED
 )
 
-from ws_server import MOCKED_QUERY_ID
-
 import time
 
 
@@ -47,7 +45,6 @@ class AccessPoint(BaseEventDrivenCMDService):
 
     def publish_publisher_created_event(self, event_data, active_client):
         event_data = {
-            'id': f'AccessPoint:{str(uuid.uuid4())}',
             "publisher_id": "Publisher1",
             # "source": "rtmp://172.17.0.1/live/mystream",
             "source": "rtmp://host.docker.internal/vod2/cars.mp4",
@@ -57,20 +54,22 @@ class AccessPoint(BaseEventDrivenCMDService):
                 "resolution": "300x300"
             }
         }
+        event_data['id'] = f'AccessPoint:{str(uuid.uuid4())}'
         self.publish_event_type_to_stream(PUB_EVENT_TYPE_PUBLISHER_CREATED, event_data)
         self.client_registration_ack_map.update({event_data['id']: active_client})
+        # to be moved to process event type publisher created
         active_client.ws.send('Publisher Registered')
 
     def publish_query_received_event(self, event_data, active_client):
+        # query text and event data, just a mock for now
         query_text = "REGISTER QUERY AnyPersonFromPub1LatencyMin OUTPUT K_GRAPH_JSON CONTENT ObjectDetection MATCH (p:person) FROM Publisher1 WITHIN TUMBLING_COUNT_WINDOW(1) WITH_QOS latency = 'min' RETURN *"
         event_data = {
-            'id': f'AccessPoint:{str(uuid.uuid4())}',
             'subscriber_id': 'Subscriber1',
             'query': query_text
         }
+        event_data['id'] = f'AccessPoint:{str(uuid.uuid4())}'
         self.publish_event_type_to_stream(PUB_EVENT_TYPE_QUERY_RECEIVED, event_data)
         self.client_registration_ack_map.update({event_data['id']: active_client})
-        active_client.ws.send(MOCKED_QUERY_ID)
 
     @timer_logger
     def process_data_event(self, event_data, json_msg):
@@ -83,16 +82,16 @@ class AccessPoint(BaseEventDrivenCMDService):
         if not super(AccessPoint, self).process_event_type(event_type, event_data, json_msg):
             return False
         if event_type == LISTEN_EVENT_TYPE_QUERY_CREATED:
-            # inform client that of the query id
+            # inform client of the query id
             query_id = event_data['query_id']
-            # registration_id = event_data['registration_id']
-            # if registration_id in self.client_registration_ack_map.keys():
-            #     registration_client = self.client_registration_ack_map[registration_id]
-            #     registration_client.ws.send(query_id)
+            query_received_event_id = event_data['query_received_event_id']
+            if query_received_event_id in self.client_registration_ack_map.keys():
+                 query_received_event_client = self.client_registration_ack_map[query_received_event_id]
+                 query_received_event_client.ws.send(query_id)
             # create reading stream for query and add to map
             self.logger.debug(f'creating query stream: {query_id}')
             query_stream = self.stream_factory.create(query_id)
-            self.query_stream_map.update({query_id: query_stream})
+            self.query_stream_map[query_id] = query_stream
         elif event_type == LISTEN_EVENT_TYPE_PUBLISHER_CREATED:
             # get rquestid
             # check if id is in self.rws_server.request_id_to_ws_client_map
@@ -111,8 +110,8 @@ class AccessPoint(BaseEventDrivenCMDService):
             query_stream = self.query_stream_map.get(query_stream_key)
 
             if not query_stream:
-                time.sleep(0.01)
-                return
+                self.logger.warning(f'Ingnoring query stream {query_stream_key}, it is not longer present in query stream map')
+                continue
             event_list = query_stream.read_events(count=1)
             for event_tuple in event_list:
                 event_id, json_msg = event_tuple
