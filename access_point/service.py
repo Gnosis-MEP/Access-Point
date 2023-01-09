@@ -9,7 +9,8 @@ from access_point.conf import (
     LISTEN_EVENT_TYPE_QUERY_CREATED,
     LISTEN_EVENT_TYPE_PUBLISHER_CREATED,
     PUB_EVENT_TYPE_QUERY_RECEIVED,
-    PUB_EVENT_TYPE_PUBLISHER_CREATED
+    PUB_EVENT_TYPE_PUBLISHER_CREATED,
+    MOCKED_TESTING
 )
 
 import time
@@ -44,32 +45,31 @@ class AccessPoint(BaseEventDrivenCMDService):
         self.rws_server.access_point = self
 
     def publish_publisher_created_event(self, event_data, active_client):
-        event_data = {
-            "publisher_id": "Publisher1",
-            # "source": "rtmp://172.17.0.1/live/mystream",
-            "source": "rtmp://host.docker.internal/vod2/cars.mp4",
-            "meta": {
-                "color": "True",
-                "fps": "30",
-                "resolution": "300x300"
+        if MOCKED_TESTING:
+            event_data = {
+                "publisher_id": "Publisher1",
+                # "source": "rtmp://172.17.0.1/live/mystream",
+                "source": "rtmp://host.docker.internal/vod2/cars.mp4",
+                "meta": {
+                    "color": "True",
+                    "fps": "30",
+                    "resolution": "300x300"
+                }
             }
-        }
         event_data['id'] = f'AccessPoint:{str(uuid.uuid4())}'
         self.publish_event_type_to_stream(PUB_EVENT_TYPE_PUBLISHER_CREATED, event_data)
-        self.client_registration_ack_map.update({event_data['id']: active_client})
-        # to be moved to process event type publisher created
-        active_client.ws.send('Publisher Registered')
+        self.client_registration_ack_map[event_data['id']] = active_client
 
     def publish_query_received_event(self, event_data, active_client):
-        # query text and event data, just a mock for now
-        query_text = "REGISTER QUERY AnyPersonFromPub1LatencyMin OUTPUT K_GRAPH_JSON CONTENT ObjectDetection MATCH (p:person) FROM Publisher1 WITHIN TUMBLING_COUNT_WINDOW(1) WITH_QOS latency = 'min' RETURN *"
-        event_data = {
-            'subscriber_id': 'Subscriber1',
-            'query': query_text
-        }
+        if MOCKED_TESTING:
+            query_text = "REGISTER QUERY AnyPersonFromPub1LatencyMin OUTPUT K_GRAPH_JSON CONTENT ObjectDetection MATCH (p:person) FROM Publisher1 WITHIN TUMBLING_COUNT_WINDOW(1) WITH_QOS latency = 'min' RETURN *"
+            event_data = {
+                'subscriber_id': 'Subscriber1',
+                'query': query_text
+            }
         event_data['id'] = f'AccessPoint:{str(uuid.uuid4())}'
         self.publish_event_type_to_stream(PUB_EVENT_TYPE_QUERY_RECEIVED, event_data)
-        self.client_registration_ack_map.update({event_data['id']: active_client})
+        self.client_registration_ack_map[event_data['id']] = active_client
 
     @timer_logger
     def process_data_event(self, event_data, json_msg):
@@ -93,10 +93,11 @@ class AccessPoint(BaseEventDrivenCMDService):
             query_stream = self.stream_factory.create(query_id)
             self.query_stream_map[query_id] = query_stream
         elif event_type == LISTEN_EVENT_TYPE_PUBLISHER_CREATED:
-            # get rquestid
-            # check if id is in self.rws_server.request_id_to_ws_client_map
-            # inform client that the publisher has been registered
-            pass
+            # inform client of that the publisher has been created
+            publisher_created_event_id = event_data['id']
+            if publisher_created_event_id in self.client_registration_ack_map.keys():
+                publisher_created_active_client = self.client_registration_ack_map[publisher_created_event_id]
+                publisher_created_active_client.ws.send('Publisher Registered')
     
     def process_data(self):
         """
