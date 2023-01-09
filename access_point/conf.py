@@ -67,3 +67,5 @@ SERVICE_DETAILS = None
 # }
 
 LOGGING_LEVEL = config('LOGGING_LEVEL', default='DEBUG')
+
+MOCKED_TESTING = config('MOCKED_TESTING', default=False, cast=bool)
