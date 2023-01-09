@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import json
 import logging
 
@@ -24,8 +23,6 @@ class RedisWebSocketServer(WebSocketServer):
     def serve_forever(self, stop_timeout=None):
         """
         this is the main entrypoint in the WS server.
-        For now it is only adding the mocked pub/query msgs and then spawning a thread that will read a query output stream
-        (using the MOCKED_QUERY_ID).
         """
         super(RedisWebSocketServer, self).serve_forever(stop_timeout=stop_timeout)
 
