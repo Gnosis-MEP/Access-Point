@@ -98,14 +98,14 @@ class AccessPoint(BaseEventDrivenCMDService):
             if publisher_created_event_id in self.client_registration_ack_map.keys():
                 publisher_created_active_client = self.client_registration_ack_map[publisher_created_event_id]
                 publisher_created_active_client.ws.send('Publisher Registered')
-    
+
     def process_data(self):
         """
         method that will run forever, and read a given redis stream.
         then it process any read msg accordinly. Eg: send to WS if it is reading from the query output stream, or process the event
         if receiving a event type of QueryCreated from Genosis, for example.
         """
-        
+
         query_stream_keys = list(self.query_stream_map.keys())
         for query_stream_key in query_stream_keys:
             query_stream = self.query_stream_map.get(query_stream_key)
@@ -139,7 +139,7 @@ class AccessPoint(BaseEventDrivenCMDService):
     def log_state(self):
         super(AccessPoint, self).log_state()
         self.logger.info(f'Service name: {self.name}')
-        # function for simple logging of python dictionary  
+        # function for simple logging of python dictionary
         # self._log_dict('Some Dictionary', self.some_dict)
         self._log_dict('Consumer groups', self.service_cmd_cg_stream_map)
 

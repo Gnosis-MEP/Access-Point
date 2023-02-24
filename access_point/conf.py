@@ -5,6 +5,8 @@ from decouple import config
 SOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SOURCE_DIR)
 
+SUBSCRIBER_MEDIA_SERVER_URL = config('SUBSCRIBER_MEDIA_SERVER_URL', default='http://localhost:8080/hls/')
+
 REDIS_ADDRESS = config('REDIS_ADDRESS', default='localhost')
 REDIS_PORT = config('REDIS_PORT', default='6379')
 
@@ -45,7 +47,7 @@ PUB_EVENT_LIST = [
     PUB_EVENT_TYPE_PUBLISHER_CREATED
 ]
 
-# Only for Content Extraction services 
+# Only for Content Extraction services
 SERVICE_DETAILS = None
 
 # Example of how to define SERVICE_DETAILS from env vars:

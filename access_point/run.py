@@ -10,6 +10,7 @@ from ws_server import RedisWebSocketServer, PubSubAccessPointApplication
 from geventwebsocket import Resource
 
 from access_point.conf import (
+    SUBSCRIBER_MEDIA_SERVER_URL,
     AP_WEBSOCKET_PATH,
     AP_WEBSOCKET_PORT,
     AP_WEBSOCKET_ADDRESS,
@@ -59,6 +60,7 @@ def subscriber_registration():
 def query_detail(query_id):
     context = {
         'query_id': query_id,
+        'SUBSCRIBER_MEDIA_SERVER_URL': SUBSCRIBER_MEDIA_SERVER_URL,
         'AP_WS_EXTERNAL_ADDRESS': AP_WS_EXTERNAL_ADDRESS,
         'AP_WEBSOCKET_ADDRESS': AP_WEBSOCKET_ADDRESS,
         'AP_WEBSOCKET_PORT': AP_WEBSOCKET_PORT,
