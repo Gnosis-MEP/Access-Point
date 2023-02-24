@@ -12,9 +12,9 @@
     <div class="centered">
         <h1>Add Subscriber</h1>
         <label for="subscriber_id"> Subscriber ID: </label>
-        <input type="text" id="subscriber_id" name="subscriber_id" value="subscriber_id"><br><br>
+        <input type="text" id="subscriber_id" name="subscriber_id" value="sub_id"><br><br>
         <label for="subscription">Subscription (Query): </label>
-        <textarea id="subscription_text" name="subscription_text" cols="70" rows="15"></textarea><br><br>
+        <textarea id="subscription_text" name="subscription_text" cols="70" rows="15">REGISTER QUERY aPerson OUTPUT AnnotatedVideoStream CONTENT ObjectDetection MATCH (p:person) FROM publisher1 WITHIN TUMBLING_COUNT_WINDOW(1) WITH_QOS accuracy = 5, latency = 8, energy_consumption = 3 RETURN *</textarea><br><br>
         <input type="submit" id="register_subscriber" value="Subscribe">
     </div>
 

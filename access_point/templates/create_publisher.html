@@ -18,10 +18,10 @@
         <h1>Add Publisher</h1>
         <form name="add_publisher">
             <label for="publisher_id"> Publisher ID: </label>
-            <input type="text" id="publisher_id" name="publisher_id" value="publisher_id"><br><br>
+            <input type="text" id="publisher_id" name="publisher_id" value="publisher1"><br><br>
 
             <label for="publisher_source"> Source (URL): </label>
-            <input type="url" id="publisher_source" name="publisher_source" value="publisher_source"><br><br>
+            <input type="url" id="publisher_source" name="publisher_source" value="rtmp://172.17.0.1/hls/mystream"><br><br>
 
             <label for="color"> Color: </label><br>
             <input type="radio" id="color_true" name="color_choice" value="color_true">
@@ -34,17 +34,17 @@
             <label for="fps_30">30</label><br>
             <input type="radio" name="fps_choice" value="60">
             <label for="fps_60">60</label><br>
-            <input type="radio" name="fps_choice" value="other">
+            <input type="radio" name="fps_choice" value="other" checked>
             <label for="fps_other">Other</label><br>
             <div id="fps_other_div">
                 <label for="fps_other_value">Please enter value: </label>
-                <input type="number" id="fps_other_value" name="fps_other_value">
+                <input type="number" id="fps_other_value" name="fps_other_value" value="10">
             </div><br><br>
 
             <label for="resolution">Resolution: </label>
-            <input type="number" id="resolution_width" name="resolution_width" min=0 max=3840>
+            <input type="number" id="resolution_width" name="resolution_width" min=0 max=3840 value=1280>
             <label for="x">x</label>
-            <input type="number" id="resolution_height" name="resolution_height" min=0 max=2160><br><br>
+            <input type="number" id="resolution_height" name="resolution_height" min=0 max=2160 value=720><br><br>
 
             <input type="submit" id="register_publisher" value="Submit">
         </form>
