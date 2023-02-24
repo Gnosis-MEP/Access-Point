@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block extra_head %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.js"></script>
+<link href="https://vjs.zencdn.net/7.2.3/video-js.css" rel="stylesheet">
 {% endblock %}
 
 
@@ -19,6 +20,10 @@
 #}
 <section class="panel radius">
     <li><strong>Events Received: </strong><span class="events_received">0</span></li>
+
+    <h3>Live Streaming:</h3>
+    <div id="livestream-area"></div>
+
     <h3>Event Message:</h3>
     <textarea class="message_pane" style="width:800px; height:1200px;" ></textarea>
 <!--
@@ -34,8 +39,26 @@
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-hls/5.14.1/videojs-contrib-hls.js"></script>
+    <script src="https://vjs.zencdn.net/7.2.3/video.js"></script>
 
     <script>
+
+        var player = null;
+        // var video_player_html = "<video id='querylivestream' width=600 class='vjs-default-skin' controls muted='true'></video>";
+        var video_player_html = "<video-js id='querylivestream' controls width=600 class='vjs-default-skin' muted='muted'></video-js>";
+
+        const videoJsOptions = {
+            autoplay: false,
+            controls: true,
+            sources: [
+                {
+                src: "{{ SUBSCRIBER_MEDIA_SERVER_URL }}{{ query_id }}.m3u8",
+                type: "application/x-mpegURL",
+                },
+            ],
+        };
+
         var query_id = "{{ query_id }}";
         var events_received = 0;
         var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
@@ -48,15 +71,30 @@
                 })
             }));
         }
+
         ws.onclose = function () { $('.connecting_status').text('disconnected'); }
         ws.onmessage = function(msg_event) {
-            console.log(msg_event);
+            // console.log(msg_event);
             var data = $.parseJSON(msg_event.data);
             var event_data = $.parseJSON(data.event);
             events_received += 1;
             var prettyJSONstr = JSON.stringify(event_data, null, 2);
             $('.message_pane').val(prettyJSONstr);
             $('.events_received').text(events_received);
+            if (player == null || player.readyState() == 0){
+                if (player !== null){
+                    player.dispose();
+                }
+                $("#livestream-area").append(video_player_html);
+                player = videojs(
+                    "querylivestream",
+                    videoJsOptions,
+                    function onPlayerReady() {
+                        this.play();
+                    }
+                )
+
+            }
         }
 
     </script>
