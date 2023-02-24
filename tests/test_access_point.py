@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from event_service_utils.tests.base_test_case import MockedEventDrivenServiceStreamTestCase
 from event_service_utils.tests.json_msg_helper import prepare_event_msg_tuple
@@ -19,6 +19,7 @@ class TestAccessPoint(MockedEventDrivenServiceStreamTestCase):
         'service_cmd_key_list': SERVICE_CMD_KEY_LIST,
         'pub_event_list': PUB_EVENT_LIST,
         'service_details': SERVICE_DETAILS,
+        'rws_server': MagicMock(),
         'logging_level': 'ERROR',
         'tracer_configs': {'reporting_host': None, 'reporting_port': None},
     }
