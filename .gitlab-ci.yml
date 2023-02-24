@@ -17,7 +17,7 @@ variables:
   LISTEN_EVENT_TYPE_QUERY_CREATED: QueryCreated
   LISTEN_EVENT_TYPE_PUBLISHER_CREATED: PublisherCreated
   SUBSCRIBER_MEDIA_SERVER_URL: http://localhost:8080/hls/
-  MOCKED_TESTING: False
+  MOCKED_TESTING: "False"
 
 Build Image:
   image: jonoh/docker-buildx-qemu
