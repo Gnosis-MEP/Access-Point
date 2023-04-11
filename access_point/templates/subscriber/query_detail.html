@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% block extra_head %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.js"></script>
-<link href="https://vjs.zencdn.net/7.2.3/video-js.css" rel="stylesheet">
+<link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+<script src="{{ url_for('static', filename='js/ovenplayer.js') }}"></script>
 {% endblock %}
 
 
@@ -13,16 +14,16 @@
 <h1>Viewing Details for Query: {{ query_id }}</h1>
 <h3>Status: <small class="connecting_status">disconnected</small></h3>
 
-{#
-<section class="panel radius">
-    <img id="image_screen" src="" height="400" width="300">
-</section>
-#}
 <section class="panel radius">
     <li><strong>Events Received: </strong><span class="events_received">0</span></li>
 
     <h3>Live Streaming:</h3>
-    <div id="livestream-area"></div>
+    <!-- Wrapper element for sizing or positioning the player -->
+    <div class="player-wrapper">
+        <!-- OvenPlayer will be initialized inside this element. -->
+        <div id="livestream-area"></div>
+    </div>
+
 
     <h3>Event Message:</h3>
     <textarea class="message_pane" style="width:800px; height:1200px;" ></textarea>
@@ -35,35 +36,73 @@
 
 {% block body_end_extra_scripts %}
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.5.3/js/foundation.min.js"></script>
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-hls/5.14.1/videojs-contrib-hls.js"></script>
-    <script src="https://vjs.zencdn.net/7.2.3/video.js"></script>
 
     <script>
+        var stream_sources =   [
+            {
+                label: 'Videostream',
+                // Set the type to 'webrtc'
+                type: 'webrtc',
+                // Set the file to WebRTC Signaling URL with OvenMediaEngine
+                file: '{{ SUBSCRIBER_MEDIA_SERVER_URL }}{{ query_id }}'
+            }
+        ]
+        var stream_options = {
+            autoStart: true, mute: true, title: "Query: {{ query_id }}", controls: true,
+            webrtcConfig: {
+                "timeoutMaxRetry": 10,
+                "connectionTimeout": 10000
+            },
+            sources: stream_sources
+        }
+        // Initialize OvenPlayer
+        // var ovenPlayer = OvenPlayer.create('livestream-area', stream_options)
 
-        var player = null;
-        // var video_player_html = "<video id='querylivestream' width=600 class='vjs-default-skin' controls muted='true'></video>";
-        var video_player_html = "<video-js id='querylivestream' controls width=600 class='vjs-default-skin' muted='muted'></video-js>";
+        var ovenPlayer = null;
 
-        const videoJsOptions = {
-            autoplay: false,
-            controls: true,
-            sources: [
-                {
-                src: "{{ SUBSCRIBER_MEDIA_SERVER_URL }}{{ query_id }}.m3u8",
-                type: "application/x-mpegURL",
-                },
-            ],
-        };
+        function loadOvenPlayer () {
+
+            if (ovenPlayer !== null){
+                ovenPlayer.remove();
+                ovenPlayer = null;
+
+                // // Reload OvenPlayer when error occured.
+                // ovenPlayer.on('error', function () {
+
+                //     // Wait 1 sec and relaod.
+                //     setTimeout(function () {
+
+                //         loadOvenPlayer();
+                //     }, 1000)
+                // });
+            }
+
+            ovenPlayer = OvenPlayer.create('livestream-area', stream_options)
+            // if(ovenPlayer.getState() == 'error'){
+            //     ovenPlayer = OvenPlayer.create('livestream-area', stream_options)
+
+            //     // Reload OvenPlayer when error occured.
+            //     ovenPlayer.on('error', function () {
+
+            //         // Wait 1 sec and relaod.
+            //         setTimeout(function () {
+
+            //             loadOvenPlayer();
+            //         }, 1000)
+            //     });
+            // }
+        }
+
+        loadOvenPlayer();
+
+        ovenPlayer.play();
+
 
         var query_id = "{{ query_id }}";
         var events_received = 0;
         var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
         ws.onopen = function () {
-             $('.connecting_status').text('connected');
+            $('.connecting_status').text('connected');
             ws.send(JSON.stringify({
                 'event_type': 'RegisterWSConnectionForQuery',// replace key with var from templated, which should be set form the conf.py
                 'event': JSON.stringify({
@@ -81,23 +120,15 @@
             var prettyJSONstr = JSON.stringify(event_data, null, 2);
             $('.message_pane').val(prettyJSONstr);
             $('.events_received').text(events_received);
-            if (player == null || player.readyState() == 0){
-                if (player !== null){
-                    player.dispose();
-                }
-                $("#livestream-area").append(video_player_html);
-                player = videojs(
-                    "querylivestream",
-                    videoJsOptions,
-                    function onPlayerReady() {
-                        this.play();
-                    }
-                )
 
+            if (ovenPlayer !== null && ovenPlayer.getState() == 'error'){
+                loadOvenPlayer();
+                ovenPlayer.play();
             }
         }
 
     </script>
+
 
 {% endblock %}
 
