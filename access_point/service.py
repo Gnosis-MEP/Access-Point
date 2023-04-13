@@ -57,8 +57,8 @@ class AccessPoint(BaseEventDrivenCMDService):
                 }
             }
         event_data['id'] = f'AccessPoint:{str(uuid.uuid4())}'
-        self.publish_event_type_to_stream(PUB_EVENT_TYPE_PUBLISHER_CREATED, event_data)
         self.client_registration_ack_map[event_data['id']] = active_client
+        self.publish_event_type_to_stream(PUB_EVENT_TYPE_PUBLISHER_CREATED, event_data)
 
     def publish_query_received_event(self, event_data, active_client):
         if MOCKED_TESTING:
@@ -68,8 +68,8 @@ class AccessPoint(BaseEventDrivenCMDService):
                 'query': query_text
             }
         event_data['id'] = f'AccessPoint:{str(uuid.uuid4())}'
-        self.publish_event_type_to_stream(PUB_EVENT_TYPE_QUERY_RECEIVED, event_data)
         self.client_registration_ack_map[event_data['id']] = active_client
+        self.publish_event_type_to_stream(PUB_EVENT_TYPE_QUERY_RECEIVED, event_data)
 
     @timer_logger
     def process_data_event(self, event_data, json_msg):
@@ -95,9 +95,14 @@ class AccessPoint(BaseEventDrivenCMDService):
         elif event_type == LISTEN_EVENT_TYPE_PUBLISHER_CREATED:
             # inform client of that the publisher has been created
             publisher_created_event_id = event_data['id']
+            self.logger.info(f'Processing pub created: {publisher_created_event_id}')
             if publisher_created_event_id in self.client_registration_ack_map.keys():
+                self.logger.info('Sending to event to WS client')
                 publisher_created_active_client = self.client_registration_ack_map[publisher_created_event_id]
                 publisher_created_active_client.ws.send('Publisher Registered')
+            else:
+                self.logger.warning(f'publisher_created_event_id "{publisher_created_event_id}" not present in self.client_registration_ack_map')
+
 
     def process_data(self):
         """
@@ -107,6 +112,10 @@ class AccessPoint(BaseEventDrivenCMDService):
         """
 
         query_stream_keys = list(self.query_stream_map.keys())
+        # avoid using too much cpu doing nothing while there is no query to listen to
+        if len(query_stream_keys) == 0:
+            time.sleep(0.01)
+            return
         for query_stream_key in query_stream_keys:
             query_stream = self.query_stream_map.get(query_stream_key)
 

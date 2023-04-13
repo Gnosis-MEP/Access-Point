@@ -1,59 +1,98 @@
-<!doctype html>
-<html>
+{% extends 'base.html' %}
+{% set active_page="subscriber_registration" %}
+{% block extra_head %}
+{% endblock %}
 
-<head>
-    <title>GNOSIS Client</title>
-    <meta name="description" content="Our first page">
-    <meta name="keywords" content="html tutorial template">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-</head>
+{% block title %}New Subscriber Query{% endblock %}
 
-<body>
-    <div class="centered">
-        <h1>Add Subscriber</h1>
-        <label for="subscriber_id"> Subscriber ID: </label>
-        <input type="text" id="subscriber_id" name="subscriber_id" value="sub_id"><br><br>
-        <label for="subscription">Subscription (Query): </label>
-        <textarea id="subscription_text" name="subscription_text" cols="70" rows="15">REGISTER QUERY aPerson OUTPUT AnnotatedVideoStream CONTENT ObjectDetection MATCH (p:person) FROM publisher1 WITHIN TUMBLING_COUNT_WINDOW(1) WITH_QOS accuracy = 5, latency = 8, energy_consumption = 3 RETURN *</textarea><br><br>
-        <input type="submit" id="register_subscriber" value="Subscribe">
+
+
+{% block page_content_title %}GNOSIS Query{% endblock %}
+
+{% block page_content_rows %}
+
+
+<div class="col-xl-8 col-lg-6">
+    <div class="card shadow mb-4">
+
+        <!-- Card Header - Dropdown -->
+        <div
+            class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">New Query Details:</h6>
+        </div>
+        <!-- Card Body -->
+        <div class="card-body">
+
+            <form name="add_publisher">
+                <div class="form-group">
+                    <label for="subscriber_id"> Subscriber ID: </label>
+                    <input type="text" id="subscriber_id" name="subscriber_id" value="sub_id" class="form-control form-control-user">
+
+                </div>
+                <div class="form-group">
+                    <label for="subscription_text">Subscription (Query): </label>
+<textarea id="subscription_text" name="subscription_text" class="form-control" cols="70" rows="15">
+REGISTER QUERY countPeople
+OUTPUT AnnotatedVideoStream
+CONTENT ObjectDetection MATCH (p:person)
+FROM publisher1 WITHIN TUMBLING_COUNT_WINDOW(1)
+WITH_QOS
+accuracy = 'medium_importance',
+latency = 'medium_high_importance',
+energy_consumption = 'high_importance'
+RETURN count(distinct p) as PeopleCount
+</textarea>
+                </div>
+
+                <button type="submit"  id="register_subscriber" class="btn btn-primary">Add Query</button>
+            </form>
+
+
+        </div>
     </div>
+</div>
 
-    <script>
+{% endblock %}
 
-        const register_subscriber = document.getElementById('register_subscriber')
-        register_subscriber.addEventListener("click", registerSubscriber);
+{% block body_end_extra_scripts %}
 
-        function registerSubscriber(event) {
-            var subscriber_id = document.getElementById('subscriber_id').value
-            var query = document.getElementById('subscription_text').value
+<script>
 
-            msg = {
-                "subscriber_id": subscriber_id,
-                "query": query
-            }
+    const register_subscriber = document.getElementById('register_subscriber')
+    register_subscriber.addEventListener("click", registerSubscriber);
 
-            msg_string = JSON.stringify(msg)
+    function registerSubscriber(event) {
+        event.preventDefault();
+        var subscriber_id = document.getElementById('subscriber_id').value
+        var query = document.getElementById('subscription_text').value.replace(/\n|\r/g, " ").replace("  ", " ");
 
-            var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
-            ws.onopen = function () {
-                $('.connecting_status').text('connected');
-                ws.send(JSON.stringify({
-                    'event_type': 'RegisterQuery',
-                    'event': msg_string
-                }));
-            }
-            ws.onclose = function () { $('.connecting_status').text('disconnected'); }
-            ws.onmessage = function (msg_event) {
-                console.log(msg_event);
-                // the query to go all the way to gnosis
-                // a query id should be generated and sent back
-                // you receive the id here and use it to load a new window
-                window.location.replace("{{ url_for('query_detail', query_id='') }}" + msg_event.data);
-            }
+        msg = {
+            "subscriber_id": subscriber_id,
+            "query": query
         }
 
-    </script>
+        msg_string = JSON.stringify(msg)
 
-</body>
+        var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
+        ws.onopen = function () {
+            $('.connecting_status').text('connected');
+            ws.send(JSON.stringify({
+                'event_type': 'RegisterQuery',
+                'event': msg_string
+            }));
+        }
+        ws.onclose = function () { $('.connecting_status').text('disconnected'); }
+        ws.onmessage = function (msg_event) {
+            console.log(msg_event);
+            // the query to go all the way to gnosis
+            // a query id should be generated and sent back
+            // you receive the id here and use it to load a new window
+            alert("Query created Successfully");
+            window.location.replace("{{ url_for('query_detail', query_id='') }}" + msg_event.data);
+        }
+    }
+</script>
+{% endblock %}
 
-</html>
+{% block on_page_load_js %}
+{% endblock %}

@@ -1,128 +1,201 @@
-<!doctype html>
-<html>
+{% extends 'base.html' %}
+{% set active_page="publisher_registration" %}
+{% block extra_head %}
+{% endblock %}
 
-<head>
-    <title>GNOSIS Client</title>
-    <meta name="description" content="Our first page">
-    <meta name="keywords" content="html tutorial template">
-    <style>
-        #fps_other_div {
-            display: none;
-        }
-    </style>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-</head>
+{% block title %}New Publisher{% endblock %}
 
-<body>
-    <div class="centered">
-        <h1>Add Publisher</h1>
-        <form name="add_publisher">
-            <label for="publisher_id"> Publisher ID: </label>
-            <input type="text" id="publisher_id" name="publisher_id" value="publisher1"><br><br>
 
-            <label for="publisher_source"> Source (URL): </label>
-            <input type="url" id="publisher_source" name="publisher_source" value="rtmp://172.17.0.1/hls/mystream"><br><br>
 
-            <label for="color"> Color: </label><br>
-            <input type="radio" id="color_true" name="color_choice" value="color_true">
-            <label for="color_ture">True</label><br>
-            <input type="radio" id="color_false" name="color_choice" value="color_false">
-            <label for="color_false">False</label><br><br>
+{% block page_content_title %}Publisher{% endblock %}
 
-            <label for="FPS">FPS: </label><br>
-            <input type="radio" name="fps_choice" value="30">
-            <label for="fps_30">30</label><br>
-            <input type="radio" name="fps_choice" value="60">
-            <label for="fps_60">60</label><br>
-            <input type="radio" name="fps_choice" value="other" checked>
-            <label for="fps_other">Other</label><br>
-            <div id="fps_other_div">
-                <label for="fps_other_value">Please enter value: </label>
-                <input type="number" id="fps_other_value" name="fps_other_value" value="10">
-            </div><br><br>
+{% block page_content_rows %}
 
-            <label for="resolution">Resolution: </label>
-            <input type="number" id="resolution_width" name="resolution_width" min=0 max=3840 value=1280>
-            <label for="x">x</label>
-            <input type="number" id="resolution_height" name="resolution_height" min=0 max=2160 value=720><br><br>
+<div class="col-xl-8 col-lg-6">
+    <div class="card shadow mb-4">
 
-            <input type="submit" id="register_publisher" value="Submit">
-        </form>
+        <!-- Card Header - Dropdown -->
+        <div
+            class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">New Publisher Details:</h6>
+            <span id="connecting_status" class="btn-warning btn-circle">
+                <i class="fas fa-exclamation-triangle"></i>
+            </span>
+        </div>
+        <!-- Card Body -->
+        <div class="card-body">
+
+            <form name="add_publisher">
+                <div class="form-group">
+                    <label for="publisher_id"> Publisher ID: </label>
+                    <input type="text" id="publisher_id" name="publisher_id" class="form-control form-control-user" value="publisher1">
+
+                    <label for="publisher_source"> Source (URI): </label>
+                    <input type="url" id="publisher_source" name="publisher_source" value="rtmp://172.17.0.1:1934/live/mystream" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="color"> Color: </label>
+                    <div class="form-check">
+                        <input type="radio" id="color_true" name="color_choice" value="color_true" class="form-check-input" checked="checked">
+                        <label class="form-check-label" for="color_true">True</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="radio" id="color_false" name="color_choice" value="color_false" class="form-check-input">
+                        <label class="form-check-label" for="color_false">
+                            False
+                        </label>
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <label for="FPS">FPS: </label>
+                    <div class="form-check">
+                        <input type="radio" name="fps_choice" value="15" name="fps_radio" class="form-check-input" checked="checked">
+                        <label class="form-check-label" for="fps_15">15</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="radio" name="fps_choice" value="30" name="fps_radio" class="form-check-input">
+                        <label class="form-check-label" for="fps_30">30</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="radio" name="fps_choice" value="60" name="fps_radio" class="form-check-input">
+                        <label class="form-check-label" for="fps_60">60</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="radio" name="fps_choice" value="other" name="fps_radio" class="form-check-input">
+                        <label class="form-check-label" for="fps_other">Other</label>
+                    </div>
+
+                </div>
+                <div class="form-group">
+                    <label for="fps_other_value" id="fps_other_label" style="display: none;">Please enter value: </label>
+                    <input type="number" id="fps_other_value" name="fps_other_value" value="10" class="form-control" style="display: none;">
+                </div>
+                <div class="form-inline">
+                    <label for="resolution">Resolution:  </label>
+                    <input type="number" id="resolution_width" name="resolution_width" min=0 max=3840 value=720 class="form-control" >
+                    <label for="x">x</label>
+                    <input type="number" id="resolution_height" name="resolution_height" min=0 max=2160 value=480 class="form-control" >
+                </div>
+
+                <button type="submit"  id="register_publisher" class="btn btn-primary">Submit</button>
+            </form>
+
+
+        </div>
     </div>
+</div>
 
-    <script>
+{% endblock %}
 
-        var radios = document.forms["add_publisher"].elements["fps_choice"]
-        for (var i = 0; i < radios.length; i++) {
-            radios[i].onclick = function () {
-                if (this.value == 'other') {
-                    document.getElementById('fps_other_div').style.display = 'inline'
+{% block body_end_extra_scripts %}
+<script>
+
+    function change_connection_css(element, connected){
+                var connection_open_outer_css = "btn-success";
+                var connection_open_inner_css = "fa-check";
+                var connection_close_outer_css = "btn-warning";
+                var connection_close_inner_css= "fa-exclamation-triangle";
+                if(connected){
+                    element.removeClass(connection_close_outer_css).children('i').eq(0).removeClass(connection_close_inner_css);
+                    element.addClass(connection_open_outer_css).children('i').eq(0).addClass(connection_open_inner_css);
+                }else{
+                    element.removeClass(connection_open_outer_css).children('i').eq(0).removeClass(connection_open_inner_css);
+                    element.addClass(connection_close_outer_css).children('i').eq(0).addClass(connection_close_inner_css);
                 }
-                else {
-                    document.getElementById('fps_other_div').style.display = 'none'
-                }
+            }
+    var radios = document.forms["add_publisher"].elements["fps_choice"]
+    for (var i = 0; i < radios.length; i++) {
+        radios[i].onclick = function () {
+            if (this.value == 'other') {
+                document.getElementById('fps_other_label').style.display = 'flex'
+                document.getElementById('fps_other_value').style.display = 'flex'
+            }
+            else {
+                document.getElementById('fps_other_label').style.display = 'none'
+                document.getElementById('fps_other_value').style.display = 'none'
+            }
+        }
+    }
+
+    const register_publisher = document.getElementById('register_publisher')
+    register_publisher.addEventListener("click", registerPublisher);
+
+    var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
+    ws.onopen = function () {
+        change_connection_css($('#connecting_status'), true);
+    }
+    ws.onclose = function () {
+        change_connection_css($('#connecting_status'), false);
+    }
+    ws.onmessage = function (msg_event) {
+        console.log(msg_event);
+        alert("Publisher created Successfully");
+        window.location.replace("{{ url_for('index') }}");
+    }
+
+    function registerPublisher(event) {
+        console.log('will post');
+        event.preventDefault();
+        var publisher_id = document.getElementById('publisher_id').value
+        var publisher_source = document.getElementById('publisher_source').value
+        var color = ""
+        if (document.getElementById('color_true').checked) {
+            color = 'True'
+        } else if (document.getElementById('color_false').checked) {
+            color = 'False'
+        }
+
+        var fps_choice = document.getElementsByName('fps_choice')
+        var fps = ""
+        for (var i = 0; i < fps_choice.length; i++) {
+            if (fps_choice[i].checked) {
+                fps = fps_choice[i].value
             }
         }
 
-        const register_publisher = document.getElementById('register_publisher')
-        register_publisher.addEventListener("click", registerPublisher);
+        if (fps == 'other') {
+            fps = document.getElementById('fps_other_value').value
+        }
 
-        function registerPublisher(event) {
-            var publisher_id = document.getElementById('publisher_id').value
-            var publisher_source = document.getElementById('publisher_source').value
-            var color = ""
-            if (document.getElementById('color_true').checked) {
-                color = 'True'
-            } else if (document.getElementById('color_false').checked) {
-                color = 'False'
-            }
+        res_width = document.getElementById('resolution_width').value
+        res_height = document.getElementById('resolution_height').value
 
-            var fps_choice = document.getElementsByName('fps_choice')
-            var fps = ""
-            for (var i = 0; i < fps_choice.length; i++) {
-                if (fps_choice[i].checked) {
-                    fps = fps_choice[i].value
-                }
-            }
-
-            if (fps == 'other') {
-                fps = document.getElementById('fps_other_value').value
-            }
-
-            res_width = document.getElementById('resolution_width').value
-            res_height = document.getElementById('resolution_height').value
-
-            const msg = {
-                "publisher_id": publisher_id,
-                "source": publisher_source,
-                "stream_key": "pub-cmd-" + publisher_id,
-                "meta": {
-                    "color": color,
-                    "fps": fps,
-                    "resolution": res_width + "x" + res_height
-                }
-            }
-
-            msg_string = JSON.stringify(msg)
-            // alert(msg_string)
-
-            var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
-            ws.onopen = function () {
-                $('.connecting_status').text('connected');
-                ws.send(JSON.stringify({
-                    'event_type': 'RegisterWSConnectionForPublisher',
-                    'event': msg_string // colon in source url messes up the send (e.g., rtmp://)
-                }));
-            }
-            ws.onclose = function () { $('.connecting_status').text('disconnected'); }
-            ws.onmessage = function (msg_event) {
-                console.log(msg_event);
-                alert(msg_event.data);
+        const msg = {
+            "publisher_id": publisher_id,
+            "source": publisher_source,
+            "stream_key": "pub-cmd-" + publisher_id,
+            "meta": {
+                "color": color,
+                "fps": fps,
+                "resolution": res_width + "x" + res_height
             }
         }
 
-    </script>
+        msg_string = JSON.stringify(msg)
 
-</body>
+        ws.send(JSON.stringify({
+            'event_type': 'RegisterWSConnectionForPublisher',
+            'event': msg_string // colon in source url messes up the send (e.g., rtmp://)
+        }));
 
-</html>
+        // var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
+        // ws.onopen = function () {
+        //     $('.connecting_status').text('connected');
+        //     ws.send(JSON.stringify({
+        //         'event_type': 'RegisterWSConnectionForPublisher',
+        //         'event': msg_string // colon in source url messes up the send (e.g., rtmp://)
+        //     }));
+        // }
+        // ws.onclose = function () { $('.connecting_status').text('disconnected'); }
+        // ws.onmessage = function (msg_event) {
+        //     console.log(msg_event);
+        //     alert("Publisher created Successfully");
+        //     window.location.replace("{{ url_for('index') }}");
+        // }
+    }
+
+</script>
+{% endblock %}

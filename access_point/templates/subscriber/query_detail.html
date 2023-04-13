@@ -10,32 +10,64 @@
 
 {% block title %}Viewing query: {{ query_id }}{% endblock %}
 
-{% block content %}
-<h1>Viewing Details for Query: {{ query_id }}</h1>
-<h3>Status: <small class="connecting_status">disconnected</small></h3>
 
-<section class="panel radius">
-    <li><strong>Events Received: </strong><span class="events_received">0</span></li>
+{% block page_content_title %}Query details:{% endblock %}
 
-    <h3>Live Streaming:</h3>
-    <!-- Wrapper element for sizing or positioning the player -->
-    <div class="player-wrapper">
-        <!-- OvenPlayer will be initialized inside this element. -->
-        <div id="livestream-area"></div>
+{% block page_content_rows %}
+
+<div class="row">
+    <div class="col-xl-7 col-lg-5">
+        <div class="card shadow mb-4">
+
+            <!-- Card Header - Dropdown -->
+            <div
+                class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Query Video Stream:</h6>
+
+                <span id="connecting_status" class="btn-warning btn-circle">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </span>
+            </div>
+            <!-- Card Body -->
+            <div class="card-body d-flex justify-content-center">
+
+                <!-- Wrapper element for sizing or positioning the player -->
+                <div class="player-wrapper d-flex justify-content-center">
+                    <!-- OvenPlayer will be initialized inside this element. -->
+                    <div id="livestream-area" class="d-flex justify-content-center"></div>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 
+    <div class="col-xl-5 col-lg-4">
+        <!-- Collapsable Card Example -->
+        <div class="card shadow mb-4">
+            <!-- Card Header - Accordion -->
+            <a href="#event_messages_collapse" class="d-block card-header py-3" data-toggle="collapse"
+                role="button" aria-expanded="false" aria-controls="event_messages_collapse">
+                <h6 class="m-0 font-weight-bold text-primary">Received Messages Details: <span id="events_received" class="badge badge-danger badge-counter">0</span></h6>
+            </a>
+            <!-- Card Content - Collapse -->
+            <div class="collapse hide" id="event_messages_collapse">
+                <div class="card-body">
 
-    <h3>Event Message:</h3>
-    <textarea class="message_pane" style="width:800px; height:1200px;" ></textarea>
-<!--
-    <ul class="message_pane">
-    </ul> -->
-</section>
+                    <div class="form-group">
+                        <label for="message_pane">Last Event Message:</label>
+                        <textarea class="form-control" id="message_pane" cols="70" rows="15" disabled></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
 {% block body_end_extra_scripts %}
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> -->
 
     <script>
         var stream_sources =   [
@@ -98,11 +130,25 @@
         ovenPlayer.play();
 
 
+        function change_connection_css(element, connected){
+            var connection_open_outer_css = "btn-success";
+            var connection_open_inner_css = "fa-check";
+            var connection_close_outer_css = "btn-warning";
+            var connection_close_inner_css= "fa-exclamation-triangle";
+            if(connected){
+                element.removeClass(connection_close_outer_css).children('i').eq(0).removeClass(connection_close_inner_css);
+                element.addClass(connection_open_outer_css).children('i').eq(0).addClass(connection_open_inner_css);
+            }else{
+                element.removeClass(connection_open_outer_css).children('i').eq(0).removeClass(connection_open_inner_css);
+                element.addClass(connection_close_outer_css).children('i').eq(0).addClass(connection_close_inner_css);
+            }
+        }
+
         var query_id = "{{ query_id }}";
         var events_received = 0;
         var ws = new WebSocket('{{ AP_WS_EXTERNAL_ADDRESS }}');
         ws.onopen = function () {
-            $('.connecting_status').text('connected');
+            change_connection_css($('#connecting_status'), true);
             ws.send(JSON.stringify({
                 'event_type': 'RegisterWSConnectionForQuery',// replace key with var from templated, which should be set form the conf.py
                 'event': JSON.stringify({
@@ -111,15 +157,17 @@
             }));
         }
 
-        ws.onclose = function () { $('.connecting_status').text('disconnected'); }
+        ws.onclose = function () {
+            change_connection_css($('#connecting_status'), false);
+        }
         ws.onmessage = function(msg_event) {
             // console.log(msg_event);
             var data = $.parseJSON(msg_event.data);
             var event_data = $.parseJSON(data.event);
             events_received += 1;
             var prettyJSONstr = JSON.stringify(event_data, null, 2);
-            $('.message_pane').val(prettyJSONstr);
-            $('.events_received').text(events_received);
+            $('#message_pane').val(prettyJSONstr);
+            $('#events_received').text(events_received);
 
             if (ovenPlayer !== null && ovenPlayer.getState() == 'error'){
                 loadOvenPlayer();
